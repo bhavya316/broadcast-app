@@ -1,0 +1,53 @@
+import { useEffect, useState } from "react";
+import { Grid, Typography } from "@mui/material";
+import StatCard from "../../components/common/StatCard";
+import api from "../../api/axios";
+
+export default function Dashboard() {
+  const [stats, setStats] = useState({
+    teachers: 0,
+    students: 0,
+    materials: 0,
+    pendingNotices: 0,
+  });
+
+  const fetchStats = async () => {
+    try {
+      const res = await api.get("/admin/dashboard");
+
+      setStats(res.data);
+    } catch (err) {
+      console.error("Failed to load dashboard stats");
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  return (
+    <div style={{ padding: 30 }}>
+      <Typography variant="h4" gutterBottom>
+        Dashboard
+      </Typography>
+
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={3}>
+          <StatCard title="Total Teachers" value={stats.teachers} />
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <StatCard title="Total Students" value={stats.students} />
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <StatCard title="Study Materials" value={stats.materials} />
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <StatCard title="Pending Notices" value={stats.pendingNotices} />
+        </Grid>
+      </Grid>
+    </div>
+  );
+}
