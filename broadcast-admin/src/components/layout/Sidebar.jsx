@@ -9,7 +9,8 @@ import {
   Logout,
   MenuBook,
   HowToReg,
-  ManageAccounts
+  ManageAccounts,
+  Flag
 } from "@mui/icons-material";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
@@ -102,6 +103,11 @@ export default function Sidebar() {
         <Link to="/materials" style={menuItemStyle}>
           <MenuBook fontSize="small" />
           Study Materials
+        </Link>
+
+        <Link to="/reports" style={menuItemStyle}>
+          <Flag fontSize="small" />
+          Reports
         </Link>
 
         <Link to="/users" style={menuItemStyle}>

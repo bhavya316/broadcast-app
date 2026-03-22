@@ -37,6 +37,11 @@ const BatchMessage = sequelize.define("BatchMessage", {
   original_name: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+
+  reply_to_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   }
 
 }, {
@@ -45,3 +50,6 @@ const BatchMessage = sequelize.define("BatchMessage", {
 });
 
 module.exports = BatchMessage;
+
+// Self-referential association for reply-to-message feature
+BatchMessage.belongsTo(BatchMessage, { foreignKey: "reply_to_id", as: "replyTo" });

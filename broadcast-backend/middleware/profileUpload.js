@@ -3,10 +3,10 @@ const path   = require("path");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/profiles");
+    cb(null, path.join(__dirname, "..", "uploads", "profiles"));
   },
   filename: (req, file, cb) => {
-    const ext  = path.extname(file.originalname);
+    const ext  = path.extname(file.originalname) || ".png";
     const role = req.user?.role || "user";
     const id   = req.user?.id   || Date.now();
     cb(null, `${role}_${id}_${Date.now()}${ext}`);
@@ -15,7 +15,7 @@ const storage = multer.diskStorage({
 
 const profileUpload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith("image/")) {
       cb(null, true);

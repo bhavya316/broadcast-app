@@ -13,6 +13,7 @@ import AdminReminders from "../pages/reminders/Reminders";
 import AdminNotices from "../pages/notices/AdminNotices";
 import NoticeApproval from "../pages/notices/NoticeApproval";
 import CreateInstituteNotice from "../pages/notices/CreateInstituteNotice";
+import Reports from "../pages/reports/Reports";
 
 export default function AppRoutes() {
   return (
@@ -99,6 +100,15 @@ export default function AppRoutes() {
           element={
             <AdminLayout>
               <StudyMaterials />
+            </AdminLayout>
+          }
+        />
+
+        <Route
+          path="/reports"
+          element={
+            <AdminLayout>
+              <Reports />
             </AdminLayout>
           }
         />
