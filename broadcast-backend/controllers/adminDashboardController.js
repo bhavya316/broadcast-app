@@ -3,6 +3,7 @@ const Student = require("../models/student");
 const Notice = require("../models/notice");
 const BatchMessage = require("../models/batchMessage");
 const PrivateMessage = require("../models/privateMessage");
+const Report = require("../models/report");
 const { Op } = require("sequelize");
 
 exports.getDashboardStats = async (req, res) => {
@@ -10,16 +11,18 @@ exports.getDashboardStats = async (req, res) => {
     const teachers = await Teacher.count();
     const students = await Student.count();
 
-    // Count files from both batch chats and private chats
     const [batchFiles, privateFiles] = await Promise.all([
       BatchMessage.count({ where: { file_url: { [Op.ne]: null } } }),
       PrivateMessage.count({ where: { file_url: { [Op.ne]: null } } })
     ]);
     const materials = batchFiles + privateFiles;
 
-    // Only count notices pending admin approval
     const pendingNotices = await Notice.count({
       where: { target_type: "institute", status: "pending" }
+    });
+
+    const pendingReports = await Report.count({
+      where: { status: "pending" }
     });
 
     res.json({
@@ -27,6 +30,7 @@ exports.getDashboardStats = async (req, res) => {
       students,
       materials,
       pendingNotices,
+      pendingReports,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

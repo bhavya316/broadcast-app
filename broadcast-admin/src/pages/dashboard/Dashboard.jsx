@@ -9,21 +9,19 @@ export default function Dashboard() {
     students: 0,
     materials: 0,
     pendingNotices: 0,
+    pendingReports: 0,
   });
 
   const fetchStats = async () => {
     try {
       const res = await api.get("/admin/dashboard");
-
       setStats(res.data);
     } catch (err) {
       console.error("Failed to load dashboard stats");
     }
   };
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
+  useEffect(() => { fetchStats(); }, []);
 
   return (
     <div style={{ padding: 30 }}>
@@ -31,23 +29,13 @@ export default function Dashboard() {
         Dashboard
       </Typography>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={3}>
-          <StatCard title="Total Teachers" value={stats.teachers} />
-        </Grid>
-
-        <Grid item xs={12} md={3}>
-          <StatCard title="Total Students" value={stats.students} />
-        </Grid>
-
-        <Grid item xs={12} md={3}>
-          <StatCard title="Study Materials" value={stats.materials} />
-        </Grid>
-
-        <Grid item xs={12} md={3}>
-          <StatCard title="Pending Notices" value={stats.pendingNotices} />
-        </Grid>
-      </Grid>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 24 }}>
+        <StatCard title="Total Teachers"   value={stats.teachers} />
+        <StatCard title="Total Students"   value={stats.students} />
+        <StatCard title="Study Materials"  value={stats.materials} />
+        <StatCard title="Pending Notices"  value={stats.pendingNotices} />
+        <StatCard title="Pending Reports"  value={stats.pendingReports} />
+      </div>
     </div>
   );
 }
