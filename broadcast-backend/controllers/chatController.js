@@ -53,6 +53,8 @@ POST /api/chat/send — Teacher only
 exports.sendBatchMessage = async (req, res) => {
   try {
     const teacherId = req.user.id;
+    const teacher = await Teacher.findByPk(teacherId, { attributes: ["name"] });
+    const teacherName = teacher?.name ?? null;
     const { batch_id, message, reply_to_id } = req.body || {};
 
     if (!batch_id) {
@@ -110,13 +112,20 @@ exports.sendBatchMessage = async (req, res) => {
     const tokens = batchStudents.map(bs => bs.Student?.fcm_token).filter(Boolean);
 
     if (tokens.length > 0) {
+      const batch = await Batch.findByPk(batch_id, { attributes: ["name"] });
       await admin.messaging().sendEachForMulticast({
         tokens,
         notification: {
-          title: "New Batch Message 📚",
-          body:  message || "New file shared"
+          title: batch?.name ?? "Batch Chat",
+          body:  `${teacherName || "Teacher"}: ${message || "New file shared"}`,
         },
-        data: { type: "batch_chat", batch_id: batch_id.toString() }
+        data: {
+          type:       "batch_chat",
+          batch_id:   batch_id.toString(),
+          batch_name: batch?.name ?? "",
+        },
+        android: { priority: "high" },
+        apns:    { payload: { aps: { sound: "default" } } },
       });
     }
 
@@ -149,8 +158,6 @@ exports.sendBatchMessage = async (req, res) => {
     const enrichedBatch = await Promise.all(createdMessages.map(m =>
       BatchMessage.findByPk(m.id, { include: [{ model: BatchMessage, as: "replyTo", required: false }] })
     ));
-    const teacher = await Teacher.findByPk(teacherId, { attributes: ["name"] });
-    const teacherName = teacher?.name ?? null;
 
     enrichedBatch.forEach(msg => {
       const payload = msg.toJSON();
@@ -476,11 +483,21 @@ exports.sendPrivateMessage = async (req, res) => {
       : await Teacher.findByPk(receiver_id);
 
     if (receiver?.fcm_token) {
+      const senderModel  = senderRole === "teacher"
+        ? require("../models/teacher")
+        : require("../models/student");
+      const senderRecord = await senderModel.findByPk(senderId, { attributes: ["name"] });
+      const senderName   = senderRecord?.name ?? "Someone";
+
       await sendNotification({
         token: receiver.fcm_token,
-        title: "New Message 💬",
-        body:  message || "New file received",
-        data:  { type: "private_chat", sender_id: senderId.toString() }
+        title: senderName,
+        body:  message || "📷 Sent a photo",
+        data:  {
+          type:        "private_chat",
+          sender_id:   senderId.toString(),
+          sender_name: senderName,
+        },
       });
     }
 
