@@ -11,6 +11,7 @@ const adminNoticeController = require("../controllers/adminNoticeController");
 const adminNoticeApprovalController = require("../controllers/adminNoticeApprovalController");
 const verifyAdminToken = require("../middleware/verifyAdminToken");
 const batchUpload = require("../middleware/batchUpload");
+const adminReportController = require("../controllers/adminReportController");
 
 // Login is public — no token needed
 router.post("/login", adminController.loginAdmin);
@@ -44,5 +45,9 @@ router.put("/notice-approvals/:noticeId/approve", adminNoticeApprovalController.
 router.put("/notice-approvals/:noticeId/reject", adminNoticeApprovalController.rejectNotice);
 router.post("/institute-notice", adminNoticeController.createInstituteNotice);
 router.delete("/notices/:noticeId", adminNoticeController.deleteNotice);
+router.get("/reports",              adminReportController.getReports);
+router.put("/reports/:id/resolve",  adminReportController.resolveReport);
+router.put("/reports/:id/dismiss",  adminReportController.dismissReport);
+router.delete("/reports/:id",       adminReportController.deleteReport);
 
 module.exports = router;

@@ -1,9 +1,10 @@
-const express = require("express");
-const router = express.Router();
+const express          = require("express");
+const router           = express.Router();
 const verifyAccessToken = require("../middleware/verifyAccessToken");
-const requireRole = require("../middleware/requireRole");
-const profileUpload = require("../middleware/profileUpload");
+const requireRole      = require("../middleware/requireRole");
+const profileUpload    = require("../middleware/profileUpload");
 const teacherController = require("../controllers/teacherController");
+const { Teacher }      = require("../models"); // FIX: was missing, caused ReferenceError
 
 router.post("/signup", teacherController.signup);
 

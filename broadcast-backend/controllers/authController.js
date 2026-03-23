@@ -60,3 +60,49 @@ exports.verifyOTP = async (req, res) => {
   }
 
 };
+
+/*
+================================================
+Refresh Access Token
+POST /api/auth/refresh
+Body: { refreshToken: string }
+Returns: { success, accessToken }
+================================================
+*/
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(401).json({ success: false, message: "Refresh token required" });
+    }
+
+    let decoded;
+    try {
+      decoded = require("jsonwebtoken").verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    } catch (err) {
+      return res.status(401).json({ success: false, message: "Invalid or expired refresh token" });
+    }
+
+    const { id, role } = decoded;
+
+    // Verify user still exists
+    const model   = role === "teacher"
+      ? require("../models/teacher")
+      : require("../models/student");
+
+    const user = await model.findByPk(id);
+    if (!user) {
+      return res.status(401).json({ success: false, message: "User not found" });
+    }
+
+    const generateAccessToken = require("../utils/generateAccessToken");
+    const accessToken = generateAccessToken(user, role);
+
+    return res.json({ success: true, accessToken });
+
+  } catch (error) {
+    console.error("refreshToken error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};

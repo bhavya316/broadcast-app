@@ -20,27 +20,25 @@ router.post(
   chatController.sendBatchMessage
 );
 
+/*
+FIX: Removed requireRole("student") from /read.
+Previously only students could mark messages as read, which meant teachers
+had no way to clear the badge when a student sent them a private message.
+Both roles now hit the same markMessageRead handler, which already validates
+that the caller is the actual receiver of the message before updating.
+*/
 router.post(
   "/read",
   verifyAccessToken,
-  requireRole("student"),
   chatController.markMessageRead
 );
 
-/*
-Send private message
-Supports text + file
-*/
 router.post(
   "/private/send",
   verifyAccessToken,
   upload.array("file", 5),
   chatController.sendPrivateMessage
 );
-
-/*
-Get private chat history (paginated)
-*/
 
 router.post(
   "/private/history",
@@ -52,6 +50,23 @@ router.post(
   "/conversations",
   verifyAccessToken,
   chatController.getConversations
+);
+
+router.post(
+  "/message-page",
+  verifyAccessToken,
+  chatController.getMessagePage
+);
+
+router.post(
+  "/media",
+  verifyAccessToken,
+  chatController.getChatMedia
+);
+router.post(
+  "/report",
+  verifyAccessToken,
+  chatController.submitReport
 );
 
 module.exports = router;

@@ -58,9 +58,17 @@ GET STUDENT BY ID
 exports.getStudentById = async (req, res) => {
   try {
     const userId = req.user.id;
-    const role = req.user.role;
-    const { student_id } = req.body;
+    const role   = req.user.role;
 
+    // Only teachers may fetch another student's full profile card
+    if (role !== "teacher") {
+      return res.status(403).json({
+        success: false,
+        message: "Only teachers can view student profiles"
+      });
+    }
+
+    const { student_id } = req.body;
     if (!student_id) {
       return res.status(400).json({
         success: false,
@@ -70,62 +78,54 @@ exports.getStudentById = async (req, res) => {
 
     const studentId = Number(student_id);
 
+    // Load student with all their batches via association (avoids raw table name issues)
     const student = await Student.findByPk(studentId, {
-      attributes: { exclude: ["phone_number", "age", "id_proof"] }
+      attributes: { exclude: ["id_proof", "fcm_token"] },
+      include: [{
+        model: Batch,
+        attributes: ["id", "name"],
+        through: { attributes: [] },
+        required: false
+      }]
     });
 
     if (!student) {
-      return res.status(404).json({
-        success: false,
-        message: "Student not found"
-      });
+      return res.status(404).json({ success: false, message: "Student not found" });
     }
 
-    // Student can only access their own data
-    if (role === "student" && Number(userId) !== studentId) {
+    // Load teacher's batches via association too
+    const teacher = await Teacher.findByPk(userId, {
+      include: [{
+        model: Batch,
+        attributes: ["id"],
+        through: { attributes: [] },
+        required: false
+      }]
+    });
+
+    const teacherBatchIds = new Set((teacher?.Batches ?? []).map(b => b.id));
+    const studentBatches  = student.Batches ?? [];
+
+    // Shared batches = batches the student is in AND the teacher teaches
+    const sharedBatches = studentBatches
+      .filter(b => teacherBatchIds.has(b.id))
+      .map(b => ({ id: b.id, name: b.name }));
+
+    if (sharedBatches.length === 0) {
       return res.status(403).json({
         success: false,
-        message: "Not allowed"
+        message: "Student is not in any of your batches"
       });
-    }
-
-    // FIX: was using undefined `StudentBatch` variable.
-    // Also Batch has no teacher_id column — ownership is via BatchTeacher.
-    // Correct check: student is in any batch that the teacher is assigned to.
-    if (role === "teacher") {
-      const teacherBatches = await BatchTeacher.findAll({
-        where: { teacher_id: userId },
-        attributes: ["batch_id"]
-      });
-
-      const batchIds = teacherBatches.map(b => b.batch_id);
-
-      const batchStudent = await BatchStudent.findOne({
-        where: {
-          student_id: studentId,
-          batch_id: { [Op.in]: batchIds }
-        }
-      });
-
-      if (!batchStudent) {
-        return res.status(403).json({
-          success: false,
-          message: "Student not in your batch"
-        });
-      }
     }
 
     res.json({
       success: true,
-      data: student
+      data: { ...student.toJSON(), shared_batches: sharedBatches }
     });
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
